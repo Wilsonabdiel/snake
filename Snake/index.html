@@ -24,7 +24,191 @@
         <section id="gameBoard"></section>
     </div>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js'></script>
-    <script  src="./app.js"></script>
-    <!-- <script  src="../javascript-snake-game/dist/script.js"></script> -->
+  
+    <script>
+        var gameBoardSize = 40;
+        var gamePoints = 0;
+        var gameSpeed = 100;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log("Ready Player One!");
+            createBoard();
+            document.querySelector(".btn").addEventListener('click', function () {
+                startGame();
+            });
+        });
+
+        var Snake = {
+            position: [], // snake start position
+            size: 3,
+            direction: "r",
+            alive: true
+        }
+
+        var Food = {
+            position: [],
+            present: false
+        }
+
+        function createBoard() {
+            var gameBoard = document.getElementById('gameBoard');
+            gameBoard.innerHTML = '';
+
+            for (var i = 0; i < gameBoardSize; i++) {
+                var row = document.createElement('div');
+                row.className = 'row';
+                gameBoard.appendChild(row);
+
+                for (var j = 0; j < gameBoardSize; j++) {
+                    var pixel = document.createElement('div');
+                    pixel.className = 'pixel';
+                    row.appendChild(pixel);
+                }
+            }
+        }
+
+        function moveSnake() {
+            var head = Snake.position[0].slice();
+
+            switch (Snake.direction) {
+                case 'r':
+                    head[1] += 1;
+                    break;
+                case 'l':
+                    head[1] -= 1;
+                    break;
+                case 'u':
+                    head[0] -= 1;
+                    break;
+                case 'd':
+                    head[0] += 1;
+                    break;
+            }
+
+            if (alive(head)) {
+                var headPixel = document.querySelector(".row:nth-child(" + head[0] + ") > .pixel:nth-child(" + head[1] + ")");
+                headPixel.classList.add("snakePixel");
+
+                for (var i = 0; i < Snake.size; i++) {
+                    var bodyPixel = document.querySelector(".row:nth-child(" + Snake.position[i][0] + ") > .pixel:nth-child(" + Snake.position[i][1] + ")");
+                    bodyPixel.classList.add("snakePixel");
+                }
+
+                if (head.every(function (e, i) {
+                    return e === Food.position[i];
+                })) {
+                    Snake.size++;
+                    Food.present = false;
+                    gamePoints += 5;
+                    var foodPixel = document.querySelector(".row:nth-child(" + Food.position[0] + ") > .pixel:nth-child(" + Food.position[1] + ")");
+                    foodPixel.classList.remove("foodPixel");
+                    document.getElementById("score").innerHTML = "Score: " + gamePoints;
+                    if (gamePoints % 16 == 0 && gameSpeed > 10) { gameSpeed -= 5; };
+                } else {
+                    var tailPixel = document.querySelector(".row:nth-child(" + Snake.position[Snake.size - 1][0] + ") > .pixel:nth-child(" + Snake.position[Snake.size - 1][1] + ")");
+                    tailPixel.classList.remove("snakePixel");
+                    Snake.position.pop();
+                }
+                Snake.position.unshift(head);
+            } else {
+                gameOver();
+            }
+        }
+
+        function generateFood() {
+            if (!Food.present) {
+                Food.position = [Math.floor((Math.random() * 40) + 1), Math.floor((Math.random() * 40) + 1)];
+                Food.present = true;
+                console.log("Food at: " + Food.position);
+                var foodPixel = document.querySelector(".row:nth-child(" + Food.position[0] + ") > .pixel:nth-child(" + Food.position[1] + ")");
+                foodPixel.classList.add("foodPixel");
+            }
+        }
+
+        function keyPress() {
+            document.addEventListener('keydown', function (event) {
+                switch (event.which) {
+                    case 37: // left arrow
+                        if (Snake.direction !== "r") { Snake.direction = "l"; }
+                        break;
+                    case 38: // up arrow
+                        if (Snake.direction !== "d") { Snake.direction = "u"; }
+                        break;
+                    case 39: // right arrow
+                        if (Snake.direction !== "l") { Snake.direction = "r"; }
+                        break;
+                    case 40: // down arrow
+                        if (Snake.direction !== "u") { Snake.direction = "d"; }
+                        break;
+                }
+            });
+        }
+
+        function gameLoop() {
+            setTimeout(function () {
+                keyPress();
+                generateFood();
+                moveSnake();
+                if (Snake.alive) { gameLoop(); }
+            }, gameSpeed);
+        }
+
+        function alive(head) {
+            if (head[0] < 1 || head[0] > 40 || head[1] < 1 || head[1] > 40) {
+                return false;
+            }
+
+            if (Snake.position[0][0] < 1 || Snake.position[0][0] > 40 || Snake.position[0][1] < 1 || Snake.position[0][1] > 40) {
+                return false;
+            }
+
+            for (var i = 1; i < Snake.size; i++) {
+                if ((Snake.position[0]).every(function (element, index) {
+                    return element === Snake.position[i][index];
+                })) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function gameOver() {
+            Snake.alive = false;
+            console.log("Game Over!");
+            document.querySelector(".overlay").style.display = 'block';
+            document.getElementById("gameOver").style.display = 'block';
+
+            var headPixel = document.querySelector(".row:nth-child(" + Snake.position[0][0] + ") > .pixel:nth-child(" + Snake.position[0][1] + ")");
+
+            var blink = function () {
+                headPixel.classList.toggle("snakePixel");
+            }
+
+            var i = 0;
+            function blinkLoop() {
+                blink();
+                setTimeout(function () {
+                    i++;
+                    if (i < 10) { blinkLoop(); }
+                }, 400);
+            }
+            blinkLoop();
+        }
+
+        function startGame() {
+            Snake.size = 3;
+            Snake.position = [[20, 20], [20, 19], [20, 18]];
+            Snake.direction = "r";
+            Snake.alive = true;
+            gameSpeed = 100;
+            gamePoints = 0;
+            Food.present = false;
+
+            createBoard();
+            document.querySelector(".overlay").style.display = 'none';
+            gameLoop();
+        }
+
+    </script> 
 </body>
 </html>
