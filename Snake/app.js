@@ -31,18 +31,18 @@ function createBoard() {
         }
     }
 }
-function getPixel(row, col) {
-    return $(".row:nth-child(" + row + ") > .pixel:nth-child(" + col + ")");
-}
+// function getPixel(row, col) {
+//     return $(".row:nth-child(" + row + ") > .pixel:nth-child(" + col + ")");
+// }
 
-function drawSnake() {
-    Snake.position.forEach(pos => {
-        getPixel(pos[0], pos[1]).addClass("snakePixel");
-    });
-}
+// function drawSnake() {
+//     Snake.position.forEach(pos => {
+//         getPixel(pos[0], pos[1]).addClass("snakePixel");
+//     });
+// }
 function moveSnake() {
     const head = Snake.position[0].slice();
-        switch (Snake.direction) {
+    switch (Snake.direction) {
             case 'r':
             head[1] += 1;
             break;
@@ -56,8 +56,18 @@ function moveSnake() {
             head[0] += 1;
             break;
         }
+    // if (alive(head)) {
+        // check after head is moved
     if (alive(head)) {
-        drawSnake();
+    // draw head
+        $(".row:nth-child(" + head[0] + ") > .pixel:nth-child(" + head[1] + ")").addClass("snakePixel");
+
+        // draw rest of body loop
+        for (var i = 0; i < Snake.size; i++) {
+        $(".row:nth-child(" + Snake.position[i][0] + ") > .pixel:nth-child(" + Snake.position[i][1] + ")").addClass("snakePixel");
+    }
+
+        // drawSnake();
         // ... (food logic)
         if (head.every(function(e,i) {
             return e === Food.position[i];
